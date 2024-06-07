@@ -1,0 +1,50 @@
+---
+- name: STUDY GROUP PLAYBOOK
+  hosts: webservers
+  become: yes
+  vars:
+    html_content: <h1>CONGRATULATION TO ME, I SUCCESSFULLY CONFIGURED A WEBSERVER USING ANSIBLE!!!!</h1>
+  tasks:
+    - name: Update all the packages on the target server
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install apache
+      yum:
+        name: httpd
+        state: present
+
+    - name: Ensure the apache service is started and enabled to start on boot
+      service:
+        name: httpd
+        state: started
+        enabled: yes 
+
+    - name: Deploy a custom HTML file to /var/www/html/index.html
+      copy:
+        content: '{{ html_content }}'
+        dest: /var/www/html/index.html
+
+    - name: Download Jenkins Dependencies
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+      
+    - name: Import Jenkins-CI key
+      shell: rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+    
+    - name: Download Java and Jenkins
+      vars:
+        packages:
+        - java-11-amazon-corretto
+        - jenkins
+      yum:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Start and enable jenkins daemon
+      service:
+        name: jenkins
+        state: started
+        enabled: yes 
